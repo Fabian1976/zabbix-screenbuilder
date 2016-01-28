@@ -137,10 +137,9 @@ def runmenu(menu, parent):
 	while x !=ord('\n'):
 		if pos != oldpos or x == 108 or x == 114 or x == 32:
 			oldpos = pos
-			screen.clear() #clears previous screen on key press and updates display based on pos
-			screen.border(0)
-			screen.addstr(2,2, menu['title'], curses.A_STANDOUT) # Title for this menu
-			screen.addstr(4,2, menu['subtitle'], curses.A_BOLD) #Subtitle for this menu
+			pad.clear() #clears previous screen on key press and updates display based on pos
+			pad.addstr(1,1, menu['title'], curses.A_STANDOUT) # Title for this menu
+			pad.addstr(4,2, menu['subtitle'], curses.A_BOLD) #Subtitle for this menu
 
 			# Display all the menu items, showing the 'pos' item highlighted
 			for index in range(optioncount):
@@ -156,19 +155,24 @@ def runmenu(menu, parent):
 						check = '[r]'
 					elif menu['options'][index]['selected'] == '*':
 						check = '[*]'
-					screen.addstr(5+index,4, "%-50s %s" % (menu['options'][index]['title'], check), textstyle)
+					pad.addstr(5+index,4, "%-50s %s" % (menu['options'][index]['title'], check), textstyle)
 				else:
-					screen.addstr(5+index,4, "%s" % menu['options'][index]['title'], textstyle)
+					pad.addstr(5+index,4, "%s" % menu['options'][index]['title'], textstyle)
 			# Now display Exit/Return at bottom of menu
 			textstyle = n
 			if pos==optioncount:
 				textstyle = h
-			screen.addstr(5+optioncount,4, "%s" % lastoption, textstyle)
-			screen.refresh()
+			pad.addstr(5+optioncount,4, "%s" % lastoption, textstyle)
+			y, x = screen.getmaxyx()
+			coord = 0, 0,  y-1, x-1
+			if pos >= y-8:
+				pad.refresh(pos-(y-9), 0, *coord)
+			else:
+				pad.refresh(0, 0, *coord)
 			# finished updating screen
 
 		try:
-			x = screen.getch() # Gets user input
+			x = pad.getch()
 		except KeyboardInterrupt: # Catch CTRL-C
 			x = 0
 			pass
@@ -221,6 +225,7 @@ def processmenu(menu, parent=None):
 			curses.endwin()
 			print "Something went wrong"
 			print "Error: %s" % e
+			raise
 		if getin == optioncount:
 			exitmenu = True
 		elif menu['options'][getin]['type'] == 'MENU':
@@ -237,6 +242,10 @@ def doMenu(menu_data):
 
 	# Change this to use different colors when highlighting
 	curses.init_pair(1,curses.COLOR_BLACK, curses.COLOR_WHITE) # Sets up color pair #1, it does black text with white background
+
+	global pad
+	pad = curses.newpad(200,200)
+	pad.keypad(1)
 
 	processmenu(menu_data)
 	curses.endwin() #VITAL!  This closes out the menu system and returns you to the bash prompt.
