@@ -347,6 +347,14 @@ def checkScreenGraphs(hostgroupid, hostgroupname, menu_data):
 	else:
 		print "\nNothing selected. Nothing to do. Just wasting time."
 
+def screenExists(screen_name):
+    found = False
+    screens = zapi.screen.get({ "output": "extend"})
+    for screen in screens:
+        if screen['name'] == screen_name:
+            found = True
+    return found
+
 def cleanup():
 	pass
 
@@ -354,8 +362,7 @@ def main():
 	import atexit
 	atexit.register(cleanup)
 
-	result = zapi.screen.exists({ "name": config.screen_name})
-	while result:
+	while screenExists(config.screen_name):
 		# Screen allready exists
 		print "\nScreen %s allready exists.\nSelect a different name." % config.screen_name
 		screen_name = ""
@@ -365,7 +372,6 @@ def main():
                         except KeyboardInterrupt: # Catch CTRL-C
                                 pass
 		config.screen_name = screen_name
-		result = zapi.screen.exists({ "name": config.screen_name})
 	hostgroupid, hostgroupname = selectHostgroup()
 	hosts = getHosts(hostgroupid)
 
